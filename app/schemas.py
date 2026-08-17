@@ -4,7 +4,7 @@ from typing import Optional, Annotated
 
 
 class PostBase(BaseModel):
-    title: str
+    title: Annotated[str, Field(min_length=1)]
     content: str
     published: bool = True
     

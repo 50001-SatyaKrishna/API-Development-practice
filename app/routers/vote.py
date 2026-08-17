@@ -21,9 +21,13 @@ def vote(vote:schemas.Vote,db: Session = Depends(database.get_db),current_user:i
         db.commit()
         return {'message' : 'Succesfully added vote'}
     else:
-        if not found_vote:
+        if vote.dir not in (0,1):
+            raise HTTPException(status_code=404,detail="Dude, that's not how it works. It's either 0 or 1")
+        elif not found_vote:
             raise HTTPException(status_code=404,detail="Vote does not exist")
         vote_query.delete(synchronize_session=False)
         db.commit()
     return {'message': 'successfully deleted vote'}
+
+
 

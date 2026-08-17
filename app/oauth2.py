@@ -2,9 +2,10 @@ from .config import settings
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from . import schemas, database, models
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from typing import Optional
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 
@@ -49,3 +50,28 @@ def get_current_user(
     token = verify_access_token(token,credentials_exception)
     user = db.query(models.User).filter(models.User.id == token.id).first()
     return user
+
+
+def get_current_user_optional(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(database.get_db),
+):
+    """Optional authentication - returns None if no valid token provided"""
+    if not authorization:
+        return None
+    
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            return None
+            
+        credentials_exception = HTTPException(
+            status_code=401,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        token_data = verify_access_token(token, credentials_exception)
+        user = db.query(models.User).filter(models.User.id == token_data.id).first()
+        return user
+    except:
+        return None
